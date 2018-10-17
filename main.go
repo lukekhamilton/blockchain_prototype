@@ -1,3 +1,6 @@
+// Building a blockchain in go
+// Ref:
+// https://jeiwan.cc/posts/building-blockchain-in-go-part-1/
 package main
 
 import (
@@ -8,7 +11,7 @@ import (
 	"time"
 )
 
-// Block ...
+// Block data structure
 type Block struct {
 	Timestamp     int64
 	Data          []byte
@@ -16,12 +19,28 @@ type Block struct {
 	Hash          []byte
 }
 
-func main() {
-
-	fmt.Println("Hello Blockchain Prototype")
+// Blockchain ...
+type Blockchain struct {
+	blocks []*Block
 }
 
-// SetHash ...
+func main() {
+	fmt.Println("Hello Blockchain Prototype")
+
+	bc := NewBlockchain()
+
+	bc.AddBlock("Send 1 BTC to Me")
+	bc.AddBlock("Send 2 more BTC to Me")
+
+	for _, block := range bc.blocks {
+		fmt.Printf("Pre. hash: %x\n", block.PrevBlockHash)
+		fmt.Printf("Data: %s\n", block.Data)
+		fmt.Printf("Hash: %x\n", block.Hash)
+		fmt.Println()
+	}
+}
+
+// SetHash in a block
 func (b *Block) SetHash() {
 	timestamp := []byte(strconv.FormatInt(b.Timestamp, 10))
 	headers := bytes.Join([][]byte{b.PrevBlockHash, b.Data, timestamp}, []byte{})
@@ -29,9 +48,26 @@ func (b *Block) SetHash() {
 	b.Hash = hash[:]
 }
 
-// NewBlock ...
+// NewBlock creation
 func NewBlock(data string, PrevBlockHash []byte) *Block {
 	block := &Block{time.Now().Unix(), []byte(data), PrevBlockHash, []byte{}}
 	block.SetHash()
 	return block
+}
+
+// AddBlock to the blockchain
+func (bc *Blockchain) AddBlock(data string) {
+	prevBlock := bc.blocks[len(bc.blocks)-1]
+	newBlock := NewBlock(data, prevBlock.Hash)
+	bc.blocks = append(bc.blocks, newBlock)
+}
+
+// NewGenesisBlock create the fist block
+func NewGenesisBlock() *Block {
+	return NewBlock("Genesis Block", []byte{})
+}
+
+// NewBlockchain create the blockchain
+func NewBlockchain() *Blockchain {
+	return &Blockchain{[]*Block{NewGenesisBlock()}}
 }
